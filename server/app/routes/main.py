@@ -68,7 +68,7 @@ def recents():
 def recent_searches():
     userId = g.validated_data['userId']
     user = dynamodb_service.get_user(userId)
-    return user
+    return user.get('recent_searches', [])
 
 @main_bp.route('/quick_search', methods=['POST'])
 @cognito_auth_required
