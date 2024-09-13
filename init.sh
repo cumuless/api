@@ -8,9 +8,11 @@ sudo apt-get install python3 python3-venv python3-pip certbot net-tools
 
 python3 -m venv venv
 source venv/bin/activate
-pip install boto3 Flask flask_cors python-dotenv flask_cognito cognitojwt
+pip install boto3 Flask flask_cors python-dotenv flask_cognito cognitojwt marshmallow
 
 # TODO: Pull Git Repo
+git config --global user.email "araadshams2003@gmail.com"
+git config --global user.name "Araad Shams"
 
 # SSL Cert
 sudo certbot certonly --standalone -d api.cumuless.com
