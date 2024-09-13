@@ -7,7 +7,6 @@ from server.app.utils.constants import llm_boilerplate
 # Configuration
 API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 headers = {
-    "Content-Type": "application/json",
     "api-key": API_KEY,
 }
 
@@ -20,16 +19,19 @@ class AzureOpenAIService:
     def query(self, query = '', messages = [], sources = []):
         if len(messages) == 0:
             messages = llm_boilerplate
-        
-        queryWithSources = "**Sources**\n\n"
 
+        queryWithSources = "**Sources**\n\n"
         index = 1
         for source in sources:
             queryWithSources += f"**{index}**\n {source['title']}\n {source['content']}\n\n"
             index += 1
         queryWithSources += f"**END OF SOURCES**\n\n**QUERY**\n\n{query}\n"
-        messagesWithQuery = messages.append({"role": "user", "content": [{"type": "text", "text": query}]})
-        messagesWithQueryAndSources = messages.append({"role": "user", "content": [{"type": "text", "text": queryWithSources}]})
+        messages.append({"role": "user", "content": [{"type": "text", "text": query}]})
+        messagesWithQuery = messages.copy()
+        messages.remove(messages[-1])
+
+        messages.append({"role": "user", "content": [{"type": "text", "text": queryWithSources}]})
+        messagesWithQueryAndSources = messages.copy()
 
         payload = {
             "messages": messagesWithQueryAndSources,
@@ -44,5 +46,5 @@ class AzureOpenAIService:
         except requests.RequestException as e:
             raise SystemExit(f"Failed to make the request. Error: {e}")
 
-        print(response.json())
-        return response.json()
+        response = response.json().get('choices', [{}])[0]['message']['content']
+        return response

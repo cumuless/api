@@ -109,16 +109,18 @@ def chat():
     email = user.get('email', '')
 
     embedding = bedrock_service.embed_text(query)
-    vectordb_filter = title_query_string(query)
 
     dynamodb_service.add_to_array_with_replacement(userId, 'recent_searches', query)
-    results = vectordb_service.filter_search(vectordb_filter, email)
     vectorsearch_results = vectordb_service.vector_search(embedding, email)
-    results.extend(vectorsearch_results)
+    vectorsearch_results = vectorsearch_results[:8]
+    resp = azure_openai_service.query(query, sources=vectorsearch_results)
 
-    azure_openai_service.query(query, sources=results)
+    # Removing 'content' key from each dictionary
+    vectorsearch_results = [{key: value for key, value in item.items() if key != 'content'} for item in vectorsearch_results]
 
-    return results
+    response = {'message': resp, 'sources': vectorsearch_results}
+
+    return response
 
 @main_bp.route('/click', methods=['POST'])
 @cognito_auth_required
