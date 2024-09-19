@@ -120,8 +120,7 @@ def chat():
     email = user.get('email', '')
 
     embedding = bedrock_service.embed_text(query)
-
-    dynamodb_service.add_to_array_with_replacement(userId, 'recent_searches', query)
+    
     vectorsearch_results = vectordb_service.vector_search(embedding, email)
     vectorsearch_results = vectorsearch_results[:8]
     resp = azure_openai_service.query(query, sources=vectorsearch_results)
