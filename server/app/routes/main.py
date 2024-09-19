@@ -2,6 +2,7 @@ from flask import Blueprint, request, g
 from flask_cognito import cognito_auth_required
 from server.app.services.bedrock_service import BedrockService
 from server.app.utils import schemas as s
+from server.app.utils.helpers import get_source_indeces_from_chat
 from server.app.utils.schemas import validate_schema
 from server.app.services.dynamodb_service import DynamoDBService
 from server.app.services.vectordb_service import VectorDBService
@@ -49,10 +50,20 @@ def bookmarks():
 @validate_schema(s.UserAndSourceSchema)
 def bookmarks_post():
     userId, sourceId = g.validated_data['userId'], g.validated_data['sourceId']
-
-    # TODO: Implement logic to add bookmark for user
     user = dynamodb_service.get_user(userId)
-    return user.get('bookmarks', [])
+    email = user.get('email', '')
+
+    vectordb_filter = f"docId == '{sourceId}'"
+
+    results = vectordb_service.filter_search(vectordb_filter, email)
+    
+    try:
+        result = results[0]
+        contentType, sourceType, url, title = result['contentType'], result['sourceType'], result['url'], result['title']
+        return dynamodb_service.add_to_array_with_replacement(userId, 'bookmarks', {'title': title, 'url': url, 'contentType': contentType, 'sourceType': sourceType})
+    except:
+        print("No results found for the click.")
+        return None
 
 @main_bp.route('/recents', methods=['GET'])
 @cognito_auth_required
@@ -114,12 +125,16 @@ def chat():
     vectorsearch_results = vectordb_service.vector_search(embedding, email)
     vectorsearch_results = vectorsearch_results[:8]
     resp = azure_openai_service.query(query, sources=vectorsearch_results)
+    source_indeces, resp = get_source_indeces_from_chat(resp)
 
     # Removing 'content' key from each dictionary
     vectorsearch_results = [{key: value for key, value in item.items() if key != 'content'} for item in vectorsearch_results]
+    for result in vectorsearch_results:
+        print(result['title'])
+    vectorsearch_results = [item for index, item in enumerate(vectorsearch_results) if index + 1 in source_indeces]
+    print(source_indeces)
 
     response = {'message': resp, 'sources': vectorsearch_results}
-
     return response
 
 @main_bp.route('/click', methods=['POST'])

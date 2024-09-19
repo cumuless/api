@@ -1,5 +1,29 @@
 import re
 
+def get_source_indeces_from_chat(input_string):
+    try:
+        # Define the pattern to match the SOURCES_USED part
+        pattern = r'\*\*SOURCES_USED: \[(.*?)\]\*\*'
+        
+        # Search for the pattern in the input string
+        match = re.search(pattern, input_string)
+        
+        if match:
+            # Extract the numbers part and convert them to a list of integers
+            numbers_str = match.group(1)
+            numbers = list(map(int, numbers_str.split(',')))
+            
+            # Remove the SOURCES_USED part from the original string
+            trimmed_string = re.sub(pattern, '', input_string).strip()
+            
+            return numbers, trimmed_string
+        else:
+            # If the pattern is not found, return an empty list and the original string
+            return [], input_string.strip()
+    except Exception as e:
+        # In case of any exceptions, return an empty list and the original string
+        return [], input_string.strip()
+    
 def title_query_string(query):
     # Split the query into words
     words = query.split()
