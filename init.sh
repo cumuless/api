@@ -8,7 +8,7 @@ sudo apt-get install python3 python3-venv python3-pip certbot net-tools
 
 python3 -m venv venv
 source venv/bin/activate
-pip install boto3 Flask flask_cors python-dotenv flask_cognito cognitojwt marshmallow
+pip install boto3 Flask flask_cors python-dotenv flask_cognito cognitojwt marshmallow uuid
 
 # TODO: Pull Git Repo
 git config --global user.email "araadshams2003@gmail.com"

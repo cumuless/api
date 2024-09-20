@@ -8,11 +8,14 @@ from server.app.services.dynamodb_service import DynamoDBService
 from server.app.services.vectordb_service import VectorDBService
 from server.app.services.azure_openai_service import AzureOpenAIService
 from server.app.utils.helpers import title_query_string
+from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
 
 bedrock_service = BedrockService()
 dynamodb_service = DynamoDBService('Users', 'userId')
+feedback_service = DynamoDBService('Feedback', 'feedbackId')
+analytics_service = DynamoDBService('Analytics', 'metricId')
 vectordb_service = VectorDBService()
 azure_openai_service = AzureOpenAIService()
 
@@ -108,8 +111,34 @@ def search():
     results = vectordb_service.filter_search(vectordb_filter, email)
     vectorsearch_results = vectordb_service.vector_search(embedding, email)
     results.extend(vectorsearch_results)
+    analytics_service.add_to_array('searches', 'entries', [{'userId': userId, 'query': query, 'email': email, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
 
     return results
+
+
+@main_bp.route('/feedback', methods=['GET'])
+@cognito_auth_required
+def get_feedback():
+    feedbacks = feedback_service.get_all_items()
+    return feedbacks
+
+@main_bp.route('/feedback', methods=['POST'])
+@cognito_auth_required
+@validate_schema(s.UserAndFeedbackSchema)
+def feedback():
+    userId, feedback = g.validated_data['userId'], g.validated_data['feedback']
+    user = dynamodb_service.get_user(userId)
+    email = user.get('email', '')
+
+    feedback_service.add_item(item={'feedback': feedback, 'userId': userId, 'email': email})
+
+    return feedback
+
+@main_bp.route('/analytics', methods=['GET'])
+@cognito_auth_required
+def analytics():
+    analytics = analytics_service.get_all_items()
+    return analytics
 
 @main_bp.route('/chat', methods=['POST'])
 @cognito_auth_required
@@ -128,10 +157,11 @@ def chat():
 
     # Removing 'content' key from each dictionary
     vectorsearch_results = [{key: value for key, value in item.items() if key != 'content'} for item in vectorsearch_results]
-    for result in vectorsearch_results:
-        print(result['title'])
     vectorsearch_results = [item for index, item in enumerate(vectorsearch_results) if index + 1 in source_indeces]
-    print(source_indeces)
+
+    titles = [{key: value for key, value in item.items() if (key == 'title' or key == 'url')} for item in vectorsearch_results]
+
+    analytics_service.add_to_array('chats', 'entries', [{'userId': userId, 'query': query, 'response': resp, 'email': email, 'source_titles': titles, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
 
     response = {'message': resp, 'sources': vectorsearch_results}
     return response

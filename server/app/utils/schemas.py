@@ -21,6 +21,10 @@ class UserAndQuerySchema(Schema):
     userId = fields.Str(required=True)
     query = fields.Str(required=True)
 
+class UserAndFeedbackSchema(Schema):
+    userId = fields.Str(required=True)
+    feedback = fields.Str(required=True)
+
 def validate_schema(schema):
     def decorator(f):
         @wraps(f)

@@ -1,5 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
+import uuid
 
 class DynamoDBService:
     def __init__(self, table_name, pk, region_name="us-east-1"):
@@ -39,12 +40,12 @@ class DynamoDBService:
             print(f"Error updating array: {e}")
             return None
         
-    def add_to_array_with_replacement(self, user_id, array_key, value):
+    def add_to_array_with_replacement(self, id, array_key, value):
         try:
             # First, get the current array
             response = self.table.get_item(
                 Key={
-                    self.pk: user_id
+                    self.pk: id
                 },
                 ProjectionExpression=array_key
             )
@@ -60,7 +61,7 @@ class DynamoDBService:
             # Update the item in DynamoDB
             response = self.table.update_item(
                 Key={
-                    self.pk: user_id
+                    self.pk: id
                 },
                 UpdateExpression=f"SET {array_key} = :value",
                 ExpressionAttributeValues={
@@ -90,3 +91,30 @@ class DynamoDBService:
         except ClientError as e:
             print(f"Error creating user: {e}")
             return None
+
+    def add_item(self, id = '', item = {}):
+        if id == '':
+            item[self.pk] = uuid.uuid4().hex
+        else:
+            item[self.pk] = id
+        
+        try:
+            response = self.table.put_item(
+                Item=item
+            )
+            return response
+        except ClientError as e:
+            print(f"Error adding item to table {self.table_name}: {e}")
+            return None
+        
+    def get_all_items(self):
+        try:
+            response = self.table.scan()
+            items = response.get('Items', [])
+            while 'LastEvaluatedKey' in response:
+                response = self.table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+                items.extend(response.get('Items', []))
+            return items
+        except ClientError as e:
+            print(f"Error getting all items: {e}")
+            return []
