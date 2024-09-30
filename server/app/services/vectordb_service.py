@@ -27,7 +27,7 @@ class VectorDBService:
         payload = json.dumps({
             "collectionName": "MainCollection",
             "data": [embedding],
-            "filter": f"ARRAY_CONTAINS(access, '{email}')",
+            # "filter": f"ARRAY_CONTAINS(access, '{email}')",
             "limit": 70,
             "outputFields": ['content', 'contentType', 'docId', 'lastUpdated', 'sourceType', 'title', 'url'],
         })
@@ -73,7 +73,8 @@ class VectorDBService:
         # Prepare payload
         payload = json.dumps({
             "collectionName": "MainCollection",
-            "filter": f"(ARRAY_CONTAINS(access, '{email}')) and ({filter})",
+            # "filter": f"(ARRAY_CONTAINS(access, '{email}')) and ({filter})",
+            "filter": f"({filter})",
             "limit": 5,
             "outputFields": ['content', 'contentType', 'docId', 'lastUpdated', 'sourceType', 'title', 'url'],
         })

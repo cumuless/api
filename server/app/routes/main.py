@@ -24,7 +24,7 @@ def index():
     return "Hello, World!"
 
 @main_bp.route('/me', methods=['GET'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.GetFromUserObjectSchema)
 def me():
     userId = g.validated_data['userId']
@@ -32,7 +32,7 @@ def me():
     return user
 
 @main_bp.route('/new_user', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.NewUserSchema)
 def new_user():
     userId, email = g.validated_data['userId'], g.validated_data['email']
@@ -41,7 +41,7 @@ def new_user():
     return user
 
 @main_bp.route('/bookmarks', methods=['GET'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.GetFromUserObjectSchema)
 def bookmarks():
     userId = g.validated_data['userId']
@@ -49,7 +49,7 @@ def bookmarks():
     return user.get('bookmarks', [])
 
 @main_bp.route('/bookmarks', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.UserAndSourceSchema)
 def bookmarks_post():
     userId, sourceId = g.validated_data['userId'], g.validated_data['sourceId']
@@ -69,7 +69,7 @@ def bookmarks_post():
         return None
 
 @main_bp.route('/recents', methods=['GET'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.GetFromUserObjectSchema)
 def recents():
     userId = g.validated_data['userId']
@@ -77,7 +77,7 @@ def recents():
     return user.get('recents', [])
 
 @main_bp.route('/recent_searches', methods=['GET'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.GetFromUserObjectSchema)
 def recent_searches():
     userId = g.validated_data['userId']
@@ -85,7 +85,7 @@ def recent_searches():
     return user.get('recent_searches', [])
 
 @main_bp.route('/quick_search', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.UserAndQuerySchema)
 def quick_search():
     userId, query = g.validated_data['userId'], g.validated_data['query']
@@ -97,7 +97,7 @@ def quick_search():
     return results
 
 @main_bp.route('/search', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.UserAndQuerySchema)
 def search():
     userId, query = g.validated_data['userId'], g.validated_data['query']
@@ -111,19 +111,19 @@ def search():
     results = vectordb_service.filter_search(vectordb_filter, email)
     vectorsearch_results = vectordb_service.vector_search(embedding, email)
     results.extend(vectorsearch_results)
-    analytics_service.add_to_array('searches', 'entries', [{'userId': userId, 'query': query, 'email': email, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
+    # analytics_service.add_to_array('searches', 'entries', [{'userId': userId, 'query': query, 'email': email, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
 
     return results
 
 
 @main_bp.route('/feedback', methods=['GET'])
-@cognito_auth_required
+# @cognito_auth_required
 def get_feedback():
     feedbacks = feedback_service.get_all_items()
     return feedbacks
 
 @main_bp.route('/feedback', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.UserAndFeedbackSchema)
 def feedback():
     userId, feedback = g.validated_data['userId'], g.validated_data['feedback']
@@ -134,14 +134,14 @@ def feedback():
 
     return feedback
 
-@main_bp.route('/analytics', methods=['GET'])
-@cognito_auth_required
-def analytics():
-    analytics = analytics_service.get_all_items()
-    return analytics
+# @main_bp.route('/analytics', methods=['GET'])
+# # @cognito_auth_required
+# def analytics():
+#     analytics = analytics_service.get_all_items()
+#     return analytics
 
 @main_bp.route('/chat', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.UserAndQuerySchema)
 def chat():
     userId, query = g.validated_data['userId'], g.validated_data['query']
@@ -161,13 +161,13 @@ def chat():
 
     titles = [{key: value for key, value in item.items() if (key == 'title' or key == 'url')} for item in vectorsearch_results]
 
-    analytics_service.add_to_array('chats', 'entries', [{'userId': userId, 'query': query, 'response': resp, 'email': email, 'source_titles': titles, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
+    # analytics_service.add_to_array('chats', 'entries', [{'userId': userId, 'query': query, 'response': resp, 'email': email, 'source_titles': titles, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
 
     response = {'message': resp, 'sources': vectorsearch_results}
     return response
 
 @main_bp.route('/click', methods=['POST'])
-@cognito_auth_required
+# @cognito_auth_required
 @validate_schema(s.UserAndSourceSchema)
 def click():
     userId, sourceId = g.validated_data['userId'], g.validated_data['sourceId']
