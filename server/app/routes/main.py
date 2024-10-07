@@ -7,7 +7,7 @@ from server.app.utils.schemas import validate_schema
 from server.app.services.dynamodb_service import DynamoDBService
 from server.app.services.vectordb_service import VectorDBService
 from server.app.services.azure_openai_service import AzureOpenAIService
-from server.app.utils.helpers import title_query_string
+from server.app.utils.helpers import title_query_string, is_question
 from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
@@ -112,6 +112,11 @@ def search():
     vectorsearch_results = vectordb_service.vector_search(embedding, email)
     results.extend(vectorsearch_results)
     # analytics_service.add_to_array('searches', 'entries', [{'userId': userId, 'query': query, 'email': email, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
+    
+    temp = results.copy()
+    results = {}
+    results['search_results'] = temp
+    results['is_chat_useful'] = is_question(query)
 
     return results
 

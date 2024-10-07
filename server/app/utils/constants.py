@@ -63,3 +63,5 @@ llm_boilerplate = [
       ]
     }
   ]
+
+question_words = ['why', 'when', 'where', 'what', 'which', 'who', 'how', 'whose', 'whom']

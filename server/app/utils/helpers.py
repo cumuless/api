@@ -1,4 +1,5 @@
 import re
+from server.app.utils.constants import question_words
 
 def get_source_indeces_from_chat(input_string):
     try:
@@ -83,3 +84,10 @@ def title_query_string(query):
     
     # Combine all LIKE clauses with OR
     return ' or '.join(like_clauses)
+
+def is_question(string):
+    string = string.lower()
+    for word in question_words:
+        if word in string:
+            return True
+    return False
