@@ -1,6 +1,5 @@
-cd /home/ubuntu
-mkdir v0
-cd v0
+mkdir uwmsa
+cd ./uwmsa
 
 # Install Deps
 sudo apt-get update
@@ -10,7 +9,7 @@ sudo apt-get install python3 python3-venv python3-pip certbot net-tools
 git config --global user.email "araadshams2003@gmail.com"
 git config --global user.name "Araad Shams"
 git clone https://github.com/cumuless/api.git .
-git checkout origin/demo
+git checkout origin/main
 
 python3 -m venv venv
 source ./venv/bin/activate
