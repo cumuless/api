@@ -12,7 +12,10 @@ def get_source_indeces_from_chat(input_string):
         if match:
             # Extract the numbers part and convert them to a list of integers
             numbers_str = match.group(1)
-            numbers = list(map(int, numbers_str.split(',')))
+            if numbers_str:
+                numbers = list(map(int, numbers_str.split(',')))
+            else:
+                numbers = []
             
             # Remove the SOURCES_USED part from the original string
             trimmed_string = re.sub(pattern, '', input_string).strip()

@@ -113,10 +113,12 @@ def search():
     results.extend(vectorsearch_results)
     # analytics_service.add_to_array('searches', 'entries', [{'userId': userId, 'query': query, 'email': email, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
     
-    temp = results.copy()
-    results = {}
-    results['search_results'] = temp
-    results['is_chat_useful'] = is_question(query)
+    ### TODO: Is chat useful?
+
+    # temp = results.copy()
+    # results = {}
+    # results['search_results'] = temp
+    # results['is_chat_useful'] = is_question(query)
 
     return results
 
@@ -169,6 +171,32 @@ def chat():
     # analytics_service.add_to_array('chats', 'entries', [{'userId': userId, 'query': query, 'response': resp, 'email': email, 'source_titles': titles, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
 
     response = {'message': resp, 'sources': vectorsearch_results}
+    return response
+
+@main_bp.route('/teams/chat', methods=['POST'])
+# @cognito_auth_required
+@validate_schema(s.UserAndQuerySchema)
+def teams_chat():
+    userId, query = g.validated_data['userId'], g.validated_data['query']
+    user = dynamodb_service.get_user(userId)
+    email = user.get('email', '')
+
+    embedding = bedrock_service.embed_text(query)
+    
+    vectorsearch_results = vectordb_service.vector_search(embedding, email)
+    vectorsearch_results = vectorsearch_results[:8]
+    resp = azure_openai_service.query(query, sources=vectorsearch_results)
+    source_indeces, resp = get_source_indeces_from_chat(resp)
+
+    # Removing 'content' key from each dictionary
+    vectorsearch_results = [{key: value for key, value in item.items() if key != 'content'} for item in vectorsearch_results]
+    vectorsearch_results = [item for index, item in enumerate(vectorsearch_results) if index + 1 in source_indeces]
+
+    titles = [{key: value for key, value in item.items() if (key == 'title' or key == 'url')} for item in vectorsearch_results]
+
+    # analytics_service.add_to_array('chats', 'entries', [{'userId': userId, 'query': query, 'response': resp, 'email': email, 'source_titles': titles, 'timestamp': datetime.now().isoformat(timespec='milliseconds') + 'Z'}])
+
+    response = {'message': resp, 'sources': vectorsearch_results, 'responded': 'I don\'t know' not in resp}
     return response
 
 @main_bp.route('/click', methods=['POST'])

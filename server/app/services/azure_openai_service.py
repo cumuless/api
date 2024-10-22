@@ -9,8 +9,8 @@ API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 headers = {
     "api-key": API_KEY,
 }
-
-ENDPOINT = "https://cumuless-dev.openai.azure.com/openai/deployments/CumulessChatLLM/chat/completions?api-version=2024-02-15-preview"
+print(API_KEY)
+ENDPOINT = "https://cumuless-demo.openai.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2024-08-01-preview"
 
 class AzureOpenAIService:
     def __init__(self):
@@ -40,11 +40,17 @@ class AzureOpenAIService:
             "max_tokens": 800
         }
 
+        print("sending request")
         try:
             response = requests.post(ENDPOINT, headers=headers, json=payload)
             response.raise_for_status()
         except requests.RequestException as e:
-            raise SystemExit(f"Failed to make the request. Error: {e}")
+            return "I don't know. **SOURCES_USED: []**"
 
-        response = response.json().get('choices', [{}])[0]['message']['content']
+        try:
+            response = response.json().get('choices', [{}])[0]['message']['content']
+        except e:
+            print("failed 2")
+            print(e)
+
         return response
